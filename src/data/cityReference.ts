@@ -3,8 +3,8 @@
 //
 // Method: the screenshot's tile grid was located (2:1 isometric lattice, 20.85 px per tile row);
 // a tile counts as buildable where the game's grid lines are drawn, and the result was snapped to
-// whole 4×4 expansions. The Town Hall footprint is estimated from its base plate (its top corner is
-// hidden behind the model), so it is marked as needing in-game confirmation.
+// whole 4×4 expansions. The Town Hall footprint was measured from its base plate and confirmed by
+// the player as 6 × 8.
 //
 // '#' = buildable, '.' = outside the city. Row 0 is the top-right edge in the game view.
 
@@ -82,7 +82,7 @@ export const REFERENCE_ROWS: string[] = [
   '............########################',
 ];
 
-/** Estimated Town Hall footprint in grid tiles (x across, y down), from the screenshot. */
+/** Town Hall footprint in grid tiles (x across, y down); size confirmed by the player. */
 export const REFERENCE_TOWN_HALL = { x: 0, y: 22, width: 6, height: 8 };
 
 /** Isometric underlay transform that puts the screenshot's tiles exactly on the grid. */

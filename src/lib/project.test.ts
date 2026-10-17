@@ -21,7 +21,8 @@ describe('reference city from the screenshot', () => {
   it('places the Town Hall on buildable land without layout issues', () => {
     const p = defaultProject();
     const get = (id: string) => p.buildings.find((b) => b.id === id);
-    expect(get('town-hall')).toMatchObject({ width: REFERENCE_TOWN_HALL.width, height: REFERENCE_TOWN_HALL.height, dimsStatus: 'user' });
+    expect(get('town-hall')).toMatchObject({ width: 6, height: 8, dimsStatus: 'verified' });
+    expect(REFERENCE_TOWN_HALL).toMatchObject({ width: 6, height: 8 });
     expect(validateCity(p.city, get, true).issues).toEqual([]);
   });
 });

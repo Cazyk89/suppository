@@ -12,7 +12,7 @@ It never touches your game account: every change is something you carry out your
 | Area | State |
 | --- | --- |
 | Inventory import | **Done.** Bundled snapshot of “Forge of Empires — Combined Storage Inventory” (exported 2026-10-17): 278 kits, 231 stored buildings, 790 boosts/consumables, 276 distinct names, 1,299 items — matches the sheet's own totals (unit-tested). Live refresh from Google Sheets, CSV upload or paste; manual adjustments survive refreshes. The sheet itself is never modified. |
-| City grid | **Measured.** From the stripped reconstruction-mode screenshot (2026-10-17, `public/reference/`): 2,320 buildable tiles (145 expansions) in a 36 × 68 area, snapped to 4×4 expansions, with the screenshot pre-aligned as an underlay. The Town Hall is placed at its spot with an **estimated 6 × 8** footprint (from its base plate) — confirm in game. Buildings are not placed yet (the city was stripped). |
+| City grid | **Measured.** From the stripped reconstruction-mode screenshot (2026-10-17, `public/reference/`): 2,320 buildable tiles (145 expansions) in a 36 × 68 area, snapped to 4×4 expansions, with the screenshot pre-aligned as an underlay. The Town Hall is placed at its spot; its **6 × 8** footprint is confirmed. Buildings are not placed yet (the city was stripped). |
 | Building database | **Structure done, statistics not yet entered.** One entry per stored building (auto-created from the inventory), the Town Hall and Great Building names. No sizes or bonuses are bundled — every value is entered by you and tagged *unknown / user-entered / verified* with a source. |
 | Optimizer | **Done.** Heuristic search, runs in a Web Worker. Validated against the same rules as the editor; reports an upper bound and never claims optimality. |
 | Recommendations & plan | **Done.** Keep / move / store / place / upgrade / construct, each with reason, score change, tiles, items, reversibility and uncertainty; ordered rebuilding steps; Markdown and PNG export. |
@@ -67,6 +67,6 @@ npm run build && npx vite preview --port 4173 &
 CHROMIUM_PATH=/path/to/chromium npm run smoke
 ```
 
-To use it on an iPhone, host `dist/` on any static HTTPS host (the *Deploy to GitHub Pages* workflow does this once Pages is enabled with “Source: GitHub Actions”), open it in Safari and choose **Share → Add to Home Screen**.
+**Live app:** https://cazyk89.github.io/suppository/ — deployed by the *Deploy to GitHub Pages* workflow on every push to the default branch. On iPhone, open it in Safari and choose **Share → Add to Home Screen**.
 
 Code map: `src/lib` holds the pure logic (`inventory`, `grid`, `scoring`, `optimizer`, `recommendations`, `project`), `src/components` the canvas renderer/editor, `src/pages` one file per app section, `src/data/inventory-snapshot.csv` the bundled sheet export.

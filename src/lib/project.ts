@@ -26,17 +26,16 @@ export function referenceCity(): CityState {
   return c;
 }
 
-/** Applies the screenshot-estimated Town Hall size unless the player already entered one. */
+const TOWN_HALL_SOURCE = `Measured from the ${REFERENCE_DATE} reconstruction screenshot; confirmed by the player`;
+
+/**
+ * Applies the confirmed Town Hall size when it is still unknown or holds the earlier unconfirmed
+ * screenshot estimate. A size the player typed in themselves is left alone.
+ */
 export function withReferenceTownHall(buildings: BuildingDef[]): BuildingDef[] {
   return buildings.map((b) =>
-    b.id === 'town-hall' && b.dimsStatus === 'unknown'
-      ? {
-          ...b,
-          width: REFERENCE_TOWN_HALL.width,
-          height: REFERENCE_TOWN_HALL.height,
-          dimsStatus: 'user',
-          source: `Estimated from the base plate in the ${REFERENCE_DATE} reconstruction screenshot — confirm in game`,
-        }
+    b.id === 'town-hall' && (b.dimsStatus === 'unknown' || b.source?.startsWith('Estimated from the base plate'))
+      ? { ...b, width: REFERENCE_TOWN_HALL.width, height: REFERENCE_TOWN_HALL.height, dimsStatus: 'verified', source: TOWN_HALL_SOURCE }
       : b,
   );
 }
@@ -86,7 +85,7 @@ export function migrate(p: Project): Project {
   out.settings.modeRules = { ...d.settings.modeRules, ...p.settings?.modeRules };
   const defs = new Map<string, BuildingDef>(out.buildings.map((b) => [b.id, b]));
   linkInventoryToDefs(out.inventory, defs);
-  out.buildings = [...defs.values()];
+  out.buildings = withReferenceTownHall([...defs.values()]);
   out.version = PROJECT_VERSION;
   return out;
 }

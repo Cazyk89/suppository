@@ -526,7 +526,7 @@ function GridPanel({ city, setCity }: { city: CityState; setCity: (fn: (c: CityS
       </div>
       <h3>From your screenshot ({REFERENCE_DATE})</h3>
       <p className="small muted">
-        Buildable outline measured from your stripped reconstruction-mode screenshot: {REFERENCE_ROWS.join('').split('#').length - 1} tiles in a {REFERENCE_ROWS[0].length} × {REFERENCE_ROWS.length} area, snapped to 4×4 expansions. The Town Hall size ({REFERENCE_TOWN_HALL.width} × {REFERENCE_TOWN_HALL.height}) is estimated from its base — confirm it in game.
+        Buildable outline measured from your stripped reconstruction-mode screenshot: {REFERENCE_ROWS.join('').split('#').length - 1} tiles in a {REFERENCE_ROWS[0].length} × {REFERENCE_ROWS.length} area, snapped to 4×4 expansions. Town Hall: {REFERENCE_TOWN_HALL.width} × {REFERENCE_TOWN_HALL.height} (confirmed).
       </p>
       <button onClick={loadReference}>Load measured city + aligned screenshot</button>
       {status && <p className="small">{status}</p>}

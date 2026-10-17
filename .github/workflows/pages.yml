@@ -1,8 +1,9 @@
 # Publishes the PWA to GitHub Pages so it can be opened on an iPhone and added to the Home Screen.
-# Run manually (Actions → Deploy to GitHub Pages → Run workflow) after enabling Pages with
-# "Source: GitHub Actions" in the repository settings.
+# Requires Pages "Source: GitHub Actions" in the repository settings.
 name: Deploy to GitHub Pages
 on:
+  push:
+    branches: [claude/forge-empires-city-optimizer-qz6eo0]
   workflow_dispatch:
 permissions:
   contents: read
