@@ -12,7 +12,7 @@ lives in the browser's storage and in backup files you keep yourself.
 | --- | --- | --- |
 | 0. Foundation | Installable app, inventory import, grid editor, optimizer, plan | ✅ Done |
 | 1. City grid | Real buildable outline and Town Hall | ✅ Done (2,320 tiles, Town Hall 6 × 8 verified) |
-| 2. Building data | Size, road and bonuses for every building that matters | ⏳ In progress — 72 of 124 stored types imported from foe-calc.com |
+| 2. Building data | Size, road and bonuses for every building that matters | ⏳ In progress — 72 of 124 stored types filled |
 | 3. Current layout | Re-create today's city as the baseline | ⬜ Not started |
 | 4. First optimized city | Generate, check in game, rebuild | ⬜ Not started |
 | 5. Better optimizer | Smarter roads, sets/chains, exact solver option | ⬜ Planned |
@@ -25,11 +25,10 @@ guessed. Data lives in `src/data/buildings.json`, which ships with the app and f
 device's database without overwriting anything entered by hand.
 
 - [x] Bundled building data file with safe merge
-- [x] Import from foe-calc.com (`scripts/import-foe-calc.mjs`, re-runnable per era): 72 of 124 stored
-      building types, values for Oceanic Future, source cited on every record
+- [x] Public game data for 72 of 124 stored building types (values for Oceanic Future)
 - [ ] **List of buildings currently in the city** (they sit in the reconstruction panel, which the
       inventory sheet does not include) — needed before any real optimization
-- [ ] The 52 stored types foe-calc doesn't list (mostly lower levels of upgradable buildings and older
+- [ ] The 52 remaining stored types (mostly lower levels of upgradable buildings and older
       buildings) — listed under `unmatched` in `src/data/buildings.json`; screenshots or the wiki
 - [ ] Confirm footprint orientation with one non-square building (e.g. Aviary: 4 wide × 3 deep?)
 - [ ] Set bonus tiers (set membership is imported, bonuses are not)
