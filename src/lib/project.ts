@@ -9,7 +9,6 @@ import type { BuildingDef, CityState, Project, Underlay } from './types';
 import { TERRAIN_BLOCKED, TERRAIN_BUILDABLE } from './types';
 
 export const PROJECT_VERSION = 1;
-export const DEFAULT_SHEET_ID = '1fUDY5p0q-RZtxTtlghbNoumyuKd2T4rQlMFiipLjtcU';
 /** Date the bundled inventory snapshot was exported from the Google Sheet. */
 export const SNAPSHOT_DATE = '2026-10-17';
 
@@ -60,7 +59,8 @@ export function defaultProject(): Project {
       weights: { ...DEFAULT_WEIGHTS },
       modeWeights: { ...DEFAULT_MODE_WEIGHTS },
       modeRules: { ...DEFAULT_MODE_RULES },
-      sheetId: DEFAULT_SHEET_ID,
+      // Entered by the player in the app and kept on the device only (the repository is public).
+      sheetId: '',
     },
     inventory: parsed.items,
     inventoryMeta: { importedAt: SNAPSHOT_DATE, source: 'Bundled snapshot of “Forge of Empires — Combined Storage Inventory”', summary: parsed.reported },

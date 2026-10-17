@@ -58,6 +58,10 @@ export function Inventory(_: { param?: string }) {
 
   const refreshFromSheet = async () => {
     const id = extractSheetId(sheetInput);
+    if (!id) {
+      setStatus('Paste your Google Sheet link first. It is saved on this device only.');
+      return;
+    }
     update((p) => ({ ...p, settings: { ...p.settings, sheetId: id } }));
     setStatus('Fetching from Google Sheets…');
     try {
@@ -105,8 +109,8 @@ export function Inventory(_: { param?: string }) {
         <summary>Refresh inventory</summary>
         <div className="stack">
           <label className="field">
-            Google Sheet link or ID
-            <input value={sheetInput} onChange={(e) => setSheetInput(e.target.value)} />
+            Google Sheet link or ID (saved on this device only)
+            <input value={sheetInput} placeholder="https://docs.google.com/spreadsheets/d/…" onChange={(e) => setSheetInput(e.target.value)} />
           </label>
           <div className="row">
             <button className="primary" onClick={refreshFromSheet}>Refresh from Google Sheets</button>
