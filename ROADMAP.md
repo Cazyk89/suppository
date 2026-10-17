@@ -12,24 +12,27 @@ lives in the browser's storage and in backup files you keep yourself.
 | --- | --- | --- |
 | 0. Foundation | Installable app, inventory import, grid editor, optimizer, plan | ✅ Done |
 | 1. City grid | Real buildable outline and Town Hall | ✅ Done (2,320 tiles, Town Hall 6 × 8 verified) |
-| 2. Building data | Size, road and bonuses for every building that matters | ⏳ **Next — waiting on building screenshots** |
+| 2. Building data | Size, road and bonuses for every building that matters | ⏳ In progress — 72 of 124 stored types imported from foe-calc.com |
 | 3. Current layout | Re-create today's city as the baseline | ⬜ Not started |
 | 4. First optimized city | Generate, check in game, rebuild | ⬜ Not started |
 | 5. Better optimizer | Smarter roads, sets/chains, exact solver option | ⬜ Planned |
 | 6. Quality of life | Faster data entry, iPhone polish, sync | ⬜ Planned |
 
-## Phase 2 — Building data (next)
+## Phase 2 — Building data (in progress)
 
 The optimizer only places buildings whose size, road requirement and bonuses are known. Nothing is
-guessed. Values from screenshots go into `src/data/buildings.json`, which ships with the app and fills
-in each device's database without overwriting anything entered by hand.
+guessed. Data lives in `src/data/buildings.json`, which ships with the app and fills in each
+device's database without overwriting anything entered by hand.
 
-- [x] Bundled building data file with safe merge (ready for the screenshots)
-
-- [ ] Player sends screenshots of building info panels (in-city buildings first, then stored ones)
-- [ ] Enter size, road requirement and bonuses for every building currently in the city
-- [ ] Enter the same for stored buildings worth considering (start with military and Forge Point ones)
-- [ ] Record the source of each value and mark it *verified* once checked against the game
+- [x] Bundled building data file with safe merge
+- [x] Import from foe-calc.com (`scripts/import-foe-calc.mjs`, re-runnable per era): 72 of 124 stored
+      building types, values for Oceanic Future, source cited on every record
+- [ ] **List of buildings currently in the city** (they sit in the reconstruction panel, which the
+      inventory sheet does not include) — needed before any real optimization
+- [ ] The 52 stored types foe-calc doesn't list (mostly lower levels of upgradable buildings and older
+      buildings) — listed under `unmatched` in `src/data/buildings.json`; screenshots or the wiki
+- [ ] Confirm footprint orientation with one non-square building (e.g. Aviary: 4 wide × 3 deep?)
+- [ ] Set bonus tiers (set membership is imported, bonuses are not)
 - [ ] Confirm era-dependent values match the current era (recorded as Oceanic Future, **unverified**)
 - [ ] Enter Great Buildings with their footprints and current levels (bonuses as shown in game)
 - [ ] Define set and chain groups and their bonus tiers
@@ -59,6 +62,7 @@ in each device's database without overwriting anything entered by hand.
 - [x] Generated trunk road goes on whichever side of the Town Hall has room (it sits on the map edge)
 - [ ] Model two-lane roads as 2 × 2 pieces, as the game does
 - [ ] Set- and chain-aware placement (place groups together instead of only scoring them)
+- [ ] Score defending-army bonuses that only apply in GbG / GE / QI (imported, not yet scored)
 - [ ] Exact or near-exact solver option (CP-SAT / integer programming) for smaller areas, with a
       proven optimality gap
 - [x] Move budget: limit how many existing buildings a plan may move, store or upgrade
