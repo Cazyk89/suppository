@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#1d2a3a"/>
+  <g transform="translate(256 270)">
+    <path d="M0-170 170-55 0 60-170-55Z" fill="#3f6e4a"/>
+    <path d="M-170-55 0 60V170L-170 55Z" fill="#2c4f35"/>
+    <path d="M170-55 0 60V170L170 55Z" fill="#24402b"/>
+    <path d="M-60-95 0-135 60-95 0-55Z" fill="#e3b341"/>
+    <path d="M-110-55-50-95 10-55-50-15Z" fill="#c9d1d9"/>
+    <path d="M10-55 70-95 130-55 70-15Z" fill="#c9d1d9"/>
+    <path d="M-50-15 10-55 70-15 10 25Z" fill="#8b949e"/>
+  </g>
+</svg>
