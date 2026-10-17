@@ -31,48 +31,35 @@ for (const v of ['231', '278', '790']) await expectText(v);
 step('inventory totals 231 / 278 / 790');
 await shot('02-inventory');
 
-// Grid: 20×20, all buildable.
+// Load the city measured from the reconstruction screenshot (with aligned underlay).
 await page.goto(base + '#/city');
 await page.getByRole('button', { name: /^Grid / }).click();
-await page.getByLabel('Width').fill('20');
-await page.getByLabel('Height').fill('20');
-await page.getByRole('button', { name: 'Apply' }).click();
-await page.getByRole('button', { name: 'Mark all unknown as buildable' }).click();
-await page.getByRole('button', { name: 'Top-down' }).click();
-step('grid set to 20×20 buildable');
+await page.getByRole('button', { name: 'Load measured city + aligned screenshot' }).click();
+await expectText('Loaded 2320 buildable tiles');
+await page.waitForTimeout(500);
+await shot('03a-city-reference-iso');
+step('measured city + aligned screenshot loaded');
 
-// Town Hall 3×3 at the centre.
-await page.getByRole('button', { name: '＋ Place' }).click();
-await page.getByPlaceholder('Search buildings').fill('Town Hall');
-await page.getByPlaceholder('w', { exact: true }).first().fill('3');
-await page.getByPlaceholder('h', { exact: true }).first().fill('3');
-await page.getByRole('button', { name: 'Set' }).first().click();
-await page.getByRole('button', { name: 'Place' }).last().click();
+// Top-down view: draw a road down the column beside the Town Hall (x=6, y=4..60).
+await page.getByRole('button', { name: 'Top-down' }).click();
+await page.waitForTimeout(300);
 const box = await page.locator('.city-canvas canvas').boundingBox();
+const GW = 36, GH = 68;
 const cell = (x, y) => {
-  // Top-down fit: grid 20×20 centred in the canvas.
-  const size = Math.min(box.width - 32, box.height - 32);
-  const t = size / 20;
-  const ox = box.x + (box.width - size) / 2;
-  const oy = box.y + (box.height - size) / 2;
+  const t = Math.min((box.width - 32) / GW, (box.height - 32) / GH);
+  const ox = box.x + (box.width - GW * t) / 2;
+  const oy = box.y + (box.height - GH * t) / 2;
   return { x: ox + (x + 0.5) * t, y: oy + (y + 0.5) * t };
 };
-let p = cell(9, 9);
-await page.mouse.click(p.x, p.y);
-await expectText('Placed Town Hall');
-step('Town Hall placed');
-
-// One road row left of the Town Hall at row 10 (x 0..7).
 await page.getByRole('button', { name: '▬ Road' }).click();
-p = cell(0, 10);
+let p = cell(6, 4);
 await page.mouse.move(p.x, p.y);
 await page.mouse.down();
-for (let x = 1; x <= 7; x++) {
-  const q = cell(x, 10);
+for (let y = 5; y <= 60; y++) {
+  const q = cell(6, y);
   await page.mouse.move(q.x, q.y, { steps: 2 });
 }
 await page.mouse.up();
-await expectText('road');
 await shot('03-city-traced');
 
 // Save as baseline.

@@ -53,13 +53,18 @@ export const CityCanvas = forwardRef<CityCanvasHandle, Props>(function CityCanva
     | null
   >(null);
   const viewRef = useRef(view);
+  // Until the player pans or zooms, keep the whole city fitted as the canvas resizes.
+  const userMoved = useRef(false);
   viewRef.current = view;
 
+  const onViewChange = useRef(props.onViewChange);
+  onViewChange.current = props.onViewChange;
   const doFit = useCallback(() => {
     const v = fitView(mode, city.width, city.height, size.w, size.h);
+    userMoved.current = false;
     setView(v);
-    props.onViewChange?.(v);
-  }, [mode, city.width, city.height, size.w, size.h, props]);
+    onViewChange.current?.(v);
+  }, [mode, city.width, city.height, size.w, size.h]);
 
   useImperativeHandle(ref, () => ({ fit: doFit, view: () => viewRef.current }), [doFit]);
 
@@ -73,12 +78,12 @@ export const CityCanvas = forwardRef<CityCanvasHandle, Props>(function CityCanva
   }, []);
 
   useEffect(() => {
-    const key = `${mode}:${city.width}x${city.height}:${size.w > 0 ? 1 : 0}`;
-    if (fitted.current !== key && size.w > 0) {
+    const key = `${mode}:${city.width}x${city.height}`;
+    if (size.w > 0 && (fitted.current !== key || !userMoved.current)) {
       fitted.current = key;
       doFit();
     }
-  }, [mode, city.width, city.height, size.w, doFit]);
+  }, [mode, city.width, city.height, size.w, size.h, doFit]);
 
   useEffect(() => {
     const cv = canvas.current;
@@ -112,6 +117,7 @@ export const CityCanvas = forwardRef<CityCanvasHandle, Props>(function CityCanva
     return { x: Math.floor(gx), y: Math.floor(gy), fx: gx, fy: gy };
   };
   const setV = (v: View) => {
+    userMoved.current = true;
     setView(v);
     props.onViewChange?.(v);
   };

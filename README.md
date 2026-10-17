@@ -12,7 +12,7 @@ It never touches your game account: every change is something you carry out your
 | Area | State |
 | --- | --- |
 | Inventory import | **Done.** Bundled snapshot of “Forge of Empires — Combined Storage Inventory” (exported 2026-10-17): 278 kits, 231 stored buildings, 790 boosts/consumables, 276 distinct names, 1,299 items — matches the sheet's own totals (unit-tested). Live refresh from Google Sheets, CSV upload or paste; manual adjustments survive refreshes. The sheet itself is never modified. |
-| City reconstruction | **Tooling done, data not yet entered.** The four screenshots from the earlier conversation were not available in this workspace (they are not in Google Drive), so the city has not been traced. Import them in *My City* and trace over them (see below). |
+| City grid | **Measured.** From the stripped reconstruction-mode screenshot (2026-10-17, `public/reference/`): 2,320 buildable tiles (145 expansions) in a 36 × 68 area, snapped to 4×4 expansions, with the screenshot pre-aligned as an underlay. The Town Hall is placed at its spot with an **estimated 6 × 8** footprint (from its base plate) — confirm in game. Buildings are not placed yet (the city was stripped). |
 | Building database | **Structure done, statistics not yet entered.** One entry per stored building (auto-created from the inventory), the Town Hall and Great Building names. No sizes or bonuses are bundled — every value is entered by you and tagged *unknown / user-entered / verified* with a source. |
 | Optimizer | **Done.** Heuristic search, runs in a Web Worker. Validated against the same rules as the editor; reports an upper bound and never claims optimality. |
 | Recommendations & plan | **Done.** Keep / move / store / place / upgrade / construct, each with reason, score change, tiles, items, reversibility and uncertainty; ordered rebuilding steps; Markdown and PNG export. |
@@ -22,7 +22,8 @@ It never touches your game account: every change is something you carry out your
 
 1. **Dashboard** — confirm your era. The checklist shows what data is still missing.
 2. **My City**
-   - *Screenshots*: import the reconstruction-mode screenshot first. Adjust scale/position/rotation until the game's tile diamonds sit on the grid (isometric view).
+   - A fresh install starts with the measured grid. *Grid → Load measured city + aligned screenshot* restores it with the screenshot underneath.
+   - *Screenshots*: import further screenshots if needed. Adjust scale/position/rotation until the game's tile diamonds sit on the grid (isometric view).
    - Paint *Land*, *Blocked*, *Road* and *2-lane* road, or use **✦ Detect**: tap a road (or land) tile on the screenshot and similar-coloured connected tiles are marked; undo and lower the tolerance if it spills.
    - *Place* the Town Hall, Great Buildings and every other building. Unknown sizes can be typed straight into the palette.
    - Red dashed outlines = overlapping / off-land / not connected; red road tiles = not connected to the Town Hall.

@@ -1,19 +1,58 @@
 import snapshotCsv from '../data/inventory-snapshot.csv?raw';
+import { REFERENCE_DATE, REFERENCE_IMAGE, REFERENCE_ROWS, REFERENCE_TOWN_HALL, REFERENCE_UNDERLAY } from '../data/cityReference';
 import { linkInventoryToDefs, seedBuildings } from './buildingDb';
 import { makeCity } from './grid';
 import { parseInventoryCsv } from './inventory';
 import { DEFAULT_MODE_RULES, DEFAULT_MODE_WEIGHTS, DEFAULT_WEIGHTS } from './scoring';
 import { blobGet, blobKeys, blobSet, blobToDataUrl, dataUrlToBlob } from './storage';
-import type { BuildingDef, Project } from './types';
+import type { BuildingDef, CityState, Project, Underlay } from './types';
+import { TERRAIN_BLOCKED, TERRAIN_BUILDABLE } from './types';
 
 export const PROJECT_VERSION = 1;
 export const DEFAULT_SHEET_ID = '1fUDY5p0q-RZtxTtlghbNoumyuKd2T4rQlMFiipLjtcU';
 /** Date the bundled inventory snapshot was exported from the Google Sheet. */
 export const SNAPSHOT_DATE = '2026-10-17';
 
+/** City grid measured from the reconstruction screenshot, with the Town Hall at its estimated spot. */
+export function referenceCity(): CityState {
+  const height = REFERENCE_ROWS.length;
+  const width = REFERENCE_ROWS[0].length;
+  const c = makeCity(width, height);
+  REFERENCE_ROWS.forEach((row, y) => {
+    for (let x = 0; x < width; x++) c.terrain[y * width + x] = row[x] === '#' ? TERRAIN_BUILDABLE : TERRAIN_BLOCKED;
+  });
+  const th = REFERENCE_TOWN_HALL;
+  c.placements.push({ uid: 'town-hall-1', defId: 'town-hall', x: th.x, y: th.y, rot: 0, locked: true, origin: 'baseline' });
+  return c;
+}
+
+/** Applies the screenshot-estimated Town Hall size unless the player already entered one. */
+export function withReferenceTownHall(buildings: BuildingDef[]): BuildingDef[] {
+  return buildings.map((b) =>
+    b.id === 'town-hall' && b.dimsStatus === 'unknown'
+      ? {
+          ...b,
+          width: REFERENCE_TOWN_HALL.width,
+          height: REFERENCE_TOWN_HALL.height,
+          dimsStatus: 'user',
+          source: `Estimated from the base plate in the ${REFERENCE_DATE} reconstruction screenshot — confirm in game`,
+        }
+      : b,
+  );
+}
+
+/** Stores the bundled reference screenshot and returns an underlay aligned to the reference grid. */
+export async function referenceUnderlay(): Promise<Underlay> {
+  const res = await fetch(REFERENCE_IMAGE);
+  if (!res.ok) throw new Error(`Could not load the reference screenshot (HTTP ${res.status}).`);
+  const blobKey = `reference-${REFERENCE_DATE}`;
+  await blobSet(blobKey, await res.blob());
+  return { id: blobKey, name: `Reconstruction screenshot ${REFERENCE_DATE}`, blobKey, visible: true, opacity: 0.6, ...REFERENCE_UNDERLAY };
+}
+
 export function defaultProject(): Project {
   const parsed = parseInventoryCsv(snapshotCsv);
-  const buildings = seedBuildings(parsed.items);
+  const buildings = withReferenceTownHall(seedBuildings(parsed.items));
   return {
     version: PROJECT_VERSION,
     settings: {
@@ -29,8 +68,8 @@ export function defaultProject(): Project {
     buildings,
     sets: [],
     recipes: [],
-    // City size is not yet verified: start with an all-"unknown" grid the player paints and resizes.
-    city: makeCity(64, 64),
+    // Buildable outline measured from the player's reconstruction screenshot (see cityReference.ts).
+    city: referenceCity(),
     baselineId: null,
     layouts: [],
     underlays: [],

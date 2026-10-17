@@ -8,6 +8,8 @@ import { displayName, hasDims, newDef } from '../lib/buildingDb';
 import { cloneCity, connectivity, coordLabel, countCells, footprint, inBounds, isConnected, resizeCity, validateCity } from '../lib/grid';
 import { effectiveQty, slug } from '../lib/inventory';
 import { blobDelete, blobSet } from '../lib/storage';
+import { referenceCity, referenceUnderlay, withReferenceTownHall } from '../lib/project';
+import { REFERENCE_DATE, REFERENCE_ROWS, REFERENCE_TOWN_HALL } from '../data/cityReference';
 import type { CityState, Placement, Underlay } from '../lib/types';
 import { ROAD_1, ROAD_2, ROAD_NONE, TERRAIN_BLOCKED, TERRAIN_BUILDABLE, TERRAIN_UNKNOWN } from '../lib/types';
 import { useStore } from '../state/store';
@@ -484,6 +486,25 @@ export function MyCity(_: { param?: string }) {
 }
 
 function GridPanel({ city, setCity }: { city: CityState; setCity: (fn: (c: CityState) => CityState) => void }) {
+  const { update } = useStore();
+  const [status, setStatus] = useState('');
+  const loadReference = async () => {
+    if (city.placements.length > 1 && !confirm('Replace the grid and buildings with the city measured from the reconstruction screenshot? (Undo is available.)')) return;
+    setStatus('Loading…');
+    try {
+      const u = await referenceUnderlay();
+      setCity(() => referenceCity());
+      update((p) => ({
+        ...p,
+        buildings: withReferenceTownHall(p.buildings),
+        underlays: [...p.underlays.filter((x) => x.id !== u.id).map((x) => ({ ...x, visible: false })), u],
+        viewMode: 'iso',
+      }));
+      setStatus(`Loaded ${REFERENCE_ROWS.join('').split('#').length - 1} buildable tiles and the aligned screenshot.`);
+    } catch (e) {
+      setStatus((e as Error).message);
+    }
+  };
   const [w, setW] = useState(city.width);
   const [h, setH] = useState(city.height);
   const [dx, setDx] = useState(0);
@@ -491,7 +512,7 @@ function GridPanel({ city, setCity }: { city: CityState; setCity: (fn: (c: CityS
   return (
     <div className="card">
       <h3 style={{ marginTop: 0 }}>Grid</h3>
-      <p className="small muted">The real buildable boundary is not verified yet. Make the grid large enough to hold the whole city, then paint land. Shifting moves everything (land, roads, buildings).</p>
+      <p className="small muted">Resize if you buy more expansions. Shifting moves everything (land, roads, buildings).</p>
       <div className="fields">
         <label className="field">Width<input type="number" min={8} max={200} value={w} onChange={(e) => setW(Number(e.target.value))} /></label>
         <label className="field">Height<input type="number" min={8} max={200} value={h} onChange={(e) => setH(Number(e.target.value))} /></label>
@@ -503,6 +524,12 @@ function GridPanel({ city, setCity }: { city: CityState; setCity: (fn: (c: CityS
         <button onClick={() => setCity((c) => ({ ...c, terrain: c.terrain.map((t) => (t === TERRAIN_UNKNOWN ? TERRAIN_BUILDABLE : t)) }))}>Mark all unknown as buildable</button>
         <button onClick={() => setCity((c) => ({ ...c, terrain: c.terrain.map((t) => (t === TERRAIN_UNKNOWN ? TERRAIN_BLOCKED : t)) }))}>Mark all unknown as blocked</button>
       </div>
+      <h3>From your screenshot ({REFERENCE_DATE})</h3>
+      <p className="small muted">
+        Buildable outline measured from your stripped reconstruction-mode screenshot: {REFERENCE_ROWS.join('').split('#').length - 1} tiles in a {REFERENCE_ROWS[0].length} × {REFERENCE_ROWS.length} area, snapped to 4×4 expansions. The Town Hall size ({REFERENCE_TOWN_HALL.width} × {REFERENCE_TOWN_HALL.height}) is estimated from its base — confirm it in game.
+      </p>
+      <button onClick={loadReference}>Load measured city + aligned screenshot</button>
+      {status && <p className="small">{status}</p>}
     </div>
   );
 }
