@@ -1,6 +1,6 @@
 import { newDef } from './buildingDb';
 import { makeCity } from './grid';
-import { DEFAULT_MODE_RULES, DEFAULT_MODE_WEIGHTS, DEFAULT_WEIGHTS } from './scoring';
+import { DEFAULT_MODE_RULES, DEFAULT_MODE_WEIGHTS, DEFAULT_OTHER_RATES, DEFAULT_WEIGHTS } from './scoring';
 import type { BuildingDef, CityState, Settings } from './types';
 import { TERRAIN_BUILDABLE } from './types';
 
@@ -10,6 +10,7 @@ export const settings: Settings = {
   weights: { ...DEFAULT_WEIGHTS },
   modeWeights: { ...DEFAULT_MODE_WEIGHTS },
   modeRules: { ...DEFAULT_MODE_RULES },
+  otherRates: { ...DEFAULT_OTHER_RATES },
   sheetId: '',
 };
 

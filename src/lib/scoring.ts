@@ -1,7 +1,7 @@
 import { emptyStats, statsOf } from './buildingDb';
 import type { DefLookup } from './grid';
 import { connectivity, footprint, inBounds, isConnected, perimeter } from './grid';
-import type { BuildingDef, CityState, ModeRules, ModeWeights, Placement, SetDef, Settings, Stats, Weights } from './types';
+import type { BuildingDef, CityState, ModeRules, ModeWeights, OtherRates, Placement, SetDef, Settings, Stats, Weights } from './types';
 import { STAT_KEYS } from './types';
 
 export const DEFAULT_WEIGHTS: Weights = { military: 35, fp: 30, goods: 20, other: 15 };
@@ -13,6 +13,12 @@ export const DEFAULT_WEIGHTS: Weights = { military: 35, fp: 30, goods: 20, other
 export const DEFAULT_MODE_WEIGHTS: ModeWeights = { gbg: 35, ge: 25, qi: 20, pvp: 15, cityDefense: 5 };
 
 export const DEFAULT_MODE_RULES: ModeRules = { qiUsesCityBoosts: false };
+
+/**
+ * Starting exchange rates into "other value" points. These are adjustable preferences (how much
+ * the player cares about each resource), not game data.
+ */
+export const DEFAULT_OTHER_RATES: OtherRates = { units: 1, coinBoost: 0.2, supplyBoost: 0.2, fpBoost: 0.5, diamonds: 1 };
 
 /**
  * One-tap priority presets. These are starting points for the player's own preferences, not game
@@ -65,8 +71,12 @@ export function categoryValues(s: Stats, settings: Settings): CategoryValues {
     fp: s.fp,
     // Guild goods count as goods: both feed the same "goods" priority.
     goods: s.goods + s.guildGoods,
-    other: s.other,
+    other: otherValue(s, settings.otherRates ?? DEFAULT_OTHER_RATES),
   };
+}
+
+export function otherValue(s: Stats, r: OtherRates): number {
+  return s.other + s.units * r.units + s.coinBoost * r.coinBoost + s.supplyBoost * r.supplyBoost + s.fpBoost * r.fpBoost + s.diamonds * r.diamonds;
 }
 
 /**

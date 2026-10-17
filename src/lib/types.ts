@@ -25,13 +25,40 @@ export interface Stats {
   goods: number;
   /** Guild goods per day. */
   guildGoods: number;
-  /** Free-form value points for coins, supplies, units, fragments and other benefits. */
+  /** Free-form value points for anything not covered by the fields below. */
   other: number;
+  /** Units per day. */
+  units: number;
+  /** Coin / supply production boost, %. */
+  coinBoost: number;
+  supplyBoost: number;
+  /** Forge Point boost, %. */
+  fpBoost: number;
+  /** Diamonds per day. */
+  diamonds: number;
+  /** Defending-army bonuses that only apply in GbG / GE / QI (recorded, not yet scored). */
+  gbgDefAtk: number;
+  gbgDefDef: number;
+  geDefAtk: number;
+  geDefDef: number;
+  qiDefAtk: number;
+  qiDefDef: number;
+}
+
+/** What one unit of each "other" resource is worth in other-value points (player preference). */
+export interface OtherRates {
+  units: number;
+  coinBoost: number;
+  supplyBoost: number;
+  fpBoost: number;
+  diamonds: number;
 }
 
 export const STAT_KEYS: (keyof Stats)[] = [
   'attAtk', 'attDef', 'gbgAtk', 'gbgDef', 'geAtk', 'geDef', 'qiAtk', 'qiDef',
   'defAtk', 'defDef', 'fp', 'goods', 'guildGoods', 'other',
+  'units', 'coinBoost', 'supplyBoost', 'fpBoost', 'diamonds',
+  'gbgDefAtk', 'gbgDefDef', 'geDefAtk', 'geDefDef', 'qiDefAtk', 'qiDefDef',
 ];
 
 export const STAT_LABELS: Record<keyof Stats, string> = {
@@ -49,6 +76,17 @@ export const STAT_LABELS: Record<keyof Stats, string> = {
   goods: 'Goods / day',
   guildGoods: 'Guild goods / day',
   other: 'Other value pts',
+  units: 'Units / day',
+  coinBoost: 'Coin boost %',
+  supplyBoost: 'Supply boost %',
+  fpBoost: 'FP boost %',
+  diamonds: 'Diamonds / day',
+  gbgDefAtk: 'GbG defending attack %',
+  gbgDefDef: 'GbG defending defense %',
+  geDefAtk: 'GE defending attack %',
+  geDefDef: 'GE defending defense %',
+  qiDefAtk: 'QI defending attack %',
+  qiDefDef: 'QI defending defense %',
 };
 
 export type RoadReq = 'none' | 'road' | 'road2' | 'unknown';
@@ -198,6 +236,7 @@ export interface Settings {
   weights: Weights;
   modeWeights: ModeWeights;
   modeRules: ModeRules;
+  otherRates: OtherRates;
   sheetId: string;
 }
 

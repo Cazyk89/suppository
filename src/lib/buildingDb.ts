@@ -18,7 +18,11 @@ export const GREAT_BUILDING_NAMES = [
 ];
 
 export function emptyStats(): Stats {
-  return { attAtk: 0, attDef: 0, gbgAtk: 0, gbgDef: 0, geAtk: 0, geDef: 0, qiAtk: 0, qiDef: 0, defAtk: 0, defDef: 0, fp: 0, goods: 0, guildGoods: 0, other: 0 };
+  return {
+    attAtk: 0, attDef: 0, gbgAtk: 0, gbgDef: 0, geAtk: 0, geDef: 0, qiAtk: 0, qiDef: 0, defAtk: 0, defDef: 0,
+    fp: 0, goods: 0, guildGoods: 0, other: 0, units: 0, coinBoost: 0, supplyBoost: 0, fpBoost: 0, diamonds: 0,
+    gbgDefAtk: 0, gbgDefDef: 0, geDefAtk: 0, geDefDef: 0, qiDefAtk: 0, qiDefDef: 0,
+  };
 }
 
 export function statsOf(def: BuildingDef): Stats {

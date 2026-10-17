@@ -6,11 +6,12 @@ import { displayName, hasDims } from '../lib/buildingDb';
 import { cloneCity, countCells, townHall } from '../lib/grid';
 import type { OptimizeInput, OptimizeOptions, OptimizeResult } from '../lib/optimizer';
 import { DEFAULT_OPTIONS } from '../lib/optimizer';
-import { DEFAULT_MODE_WEIGHTS, DEFAULT_WEIGHTS, PRESETS, evaluateCity } from '../lib/scoring';
-import type { ModeWeights, Weights } from '../lib/types';
+import { DEFAULT_MODE_WEIGHTS, DEFAULT_OTHER_RATES, DEFAULT_WEIGHTS, PRESETS, evaluateCity } from '../lib/scoring';
+import type { ModeWeights, OtherRates, Weights } from '../lib/types';
 import { useStore } from '../state/store';
 
 const W_LABELS: Record<keyof Weights, string> = { military: 'Military strength', fp: 'Forge Points', goods: 'Goods', other: 'Resources & other' };
+const OTHER_LABELS: Record<keyof OtherRates, string> = { units: 'per unit', coinBoost: 'per 1% coin boost', supplyBoost: 'per 1% supply boost', fpBoost: 'per 1% FP boost', diamonds: 'per diamond' };
 const M_LABELS: Record<keyof ModeWeights, string> = { gbg: 'Guild Battlegrounds', ge: 'Guild Expedition', qi: 'Quantum Incursions', pvp: 'PvP / neighborhood', cityDefense: 'City defense (defending army)' };
 
 // Results are kept for the session so switching tabs doesn't lose them.
@@ -132,6 +133,16 @@ export function Optimizer(_: { param?: string }) {
             <input type="checkbox" checked={settings.modeRules.qiUsesCityBoosts} onChange={(e) => update((p) => ({ ...p, settings: { ...p.settings, modeRules: { qiUsesCityBoosts: e.target.checked } } }))} />
             General attacking-army bonuses also apply in QI (off: only QI-specific bonuses count)
           </label>
+        </details>
+        <details>
+          <summary>What “other resources” are worth</summary>
+          <p className="small muted">Other-value points per unit of each resource. These are your preferences, not game data. Defending-army bonuses that only apply inside GbG / GE / QI are recorded but not scored yet.</p>
+          <div className="fields">
+            {(Object.keys(OTHER_LABELS) as (keyof OtherRates)[]).map((k) => (
+              <label key={k} className="field">{OTHER_LABELS[k]}<input inputMode="decimal" value={settings.otherRates[k]} onChange={(e) => update((p) => ({ ...p, settings: { ...p.settings, otherRates: { ...p.settings.otherRates, [k]: Number(e.target.value) || 0 } } }))} /></label>
+            ))}
+          </div>
+          <button className="sm" style={{ marginTop: 6 }} onClick={() => update((p) => ({ ...p, settings: { ...p.settings, otherRates: { ...DEFAULT_OTHER_RATES } } }))}>Reset</button>
         </details>
       </div>
 

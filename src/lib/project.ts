@@ -4,7 +4,7 @@ import { linkInventoryToDefs, seedBuildings } from './buildingDb';
 import { mergeBundled } from './bundled';
 import { makeCity } from './grid';
 import { parseInventoryCsv } from './inventory';
-import { DEFAULT_MODE_RULES, DEFAULT_MODE_WEIGHTS, DEFAULT_WEIGHTS } from './scoring';
+import { DEFAULT_MODE_RULES, DEFAULT_MODE_WEIGHTS, DEFAULT_OTHER_RATES, DEFAULT_WEIGHTS } from './scoring';
 import { blobGet, blobKeys, blobSet, blobToDataUrl, dataUrlToBlob } from './storage';
 import type { BuildingDef, CityState, Project } from './types';
 import { TERRAIN_BLOCKED, TERRAIN_BUILDABLE } from './types';
@@ -51,6 +51,7 @@ export function defaultProject(): Project {
       weights: { ...DEFAULT_WEIGHTS },
       modeWeights: { ...DEFAULT_MODE_WEIGHTS },
       modeRules: { ...DEFAULT_MODE_RULES },
+      otherRates: { ...DEFAULT_OTHER_RATES },
       // Entered by the player in the app and kept on the device only (the repository is public).
       sheetId: '',
     },
@@ -75,6 +76,7 @@ export function migrate(p: Project): Project {
   out.settings.weights = { ...d.settings.weights, ...p.settings?.weights };
   out.settings.modeWeights = { ...d.settings.modeWeights, ...p.settings?.modeWeights };
   out.settings.modeRules = { ...d.settings.modeRules, ...p.settings?.modeRules };
+  out.settings.otherRates = { ...d.settings.otherRates, ...p.settings?.otherRates };
   const defs = new Map<string, BuildingDef>(out.buildings.map((b) => [b.id, b]));
   linkInventoryToDefs(out.inventory, defs);
   const merged = mergeBundled(withReferenceTownHall([...defs.values()]), out.sets);
