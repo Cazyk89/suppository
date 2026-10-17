@@ -274,3 +274,38 @@ export function planToText(title: string, steps: PlanStep[], recs: Recommendatio
   }
   return lines.join('\n');
 }
+
+export interface Shortfall {
+  key: string;
+  name: string;
+  needed: number;
+  available: number;
+}
+
+/**
+ * Stored items a proposed layout needs (new placements from storage, buildings consumed by
+ * recipes, and recipe inputs) compared with what the inventory holds now. Non-empty means the plan
+ * was made with an older inventory and should be re-run.
+ */
+export function inventoryShortfalls(baseline: CityState, proposed: CityState, inventory: InventoryItem[], recipes: Recipe[]): Shortfall[] {
+  const before = new Set(baseline.placements.map((p) => p.uid));
+  const need = new Map<string, number>();
+  const add = (k: string, n: number) => need.set(k, (need.get(k) ?? 0) + n);
+  for (const p of proposed.placements) {
+    if (before.has(p.uid) && p.origin !== 'recipe') continue;
+    if (p.origin === 'inventory' && p.sourceRef) add(p.sourceRef, 1);
+    if (p.consumedRef) add(p.consumedRef, 1);
+    if (p.origin === 'recipe') {
+      const r = recipes.find((x) => x.id === p.sourceRef);
+      for (const i of r?.inputs ?? []) add(i.key, i.qty);
+    }
+  }
+  const byKey = new Map(inventory.map((i) => [i.key, i]));
+  const out: Shortfall[] = [];
+  for (const [key, needed] of need) {
+    const item = byKey.get(key);
+    const available = item ? effectiveQty(item) : 0;
+    if (needed > available) out.push({ key, name: item?.rawName ?? key, needed, available });
+  }
+  return out;
+}

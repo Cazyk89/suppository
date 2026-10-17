@@ -22,6 +22,27 @@ export function Buildings({ param }: { param?: string }) {
   const [filter, setFilter] = useState<Filter>('city');
   const [tab, setTab] = useState<'list' | 'sets' | 'recipes'>('list');
   const [msg, setMsg] = useState('');
+  const [picking, setPicking] = useState(false);
+  const [picked, setPicked] = useState<Set<string>>(new Set());
+  const [bulk, setBulk] = useState<{ road: RoadReq | ''; kind: BuildingKind | ''; rotatable: '' | 'yes' | 'no'; protect: '' | 'yes' | 'no' }>({ road: '', kind: '', rotatable: '', protect: '' });
+  const applyBulk = () => {
+    update((p) => ({
+      ...p,
+      buildings: p.buildings.map((b) => {
+        if (!picked.has(b.id)) return b;
+        const n: BuildingDef = { ...b };
+        if (bulk.road) n.road = bulk.road;
+        if (bulk.kind) n.kind = bulk.kind;
+        if (bulk.rotatable) n.rotatable = bulk.rotatable === 'yes';
+        if (bulk.protect) n.protected = bulk.protect === 'yes';
+        delete n.bundled;
+        return n;
+      }),
+    }));
+    setMsg(`Updated ${picked.size} building${picked.size === 1 ? '' : 's'}.`);
+    setPicked(new Set());
+    setPicking(false);
+  };
   const editing = param ? project.buildings.find((b) => b.id === param) : undefined;
 
   const inCity = new Set(project.city.placements.map((p) => p.defId));
@@ -85,6 +106,7 @@ export function Buildings({ param }: { param?: string }) {
         d.stats = stats;
         if (anyStat && d.statsStatus === 'unknown') d.statsStatus = 'user';
         if (hasDims(d) && d.dimsStatus === 'unknown') d.dimsStatus = 'user';
+        delete d.bundled;
         defs.set(id, d);
       }
       return { ...p, buildings: [...defs.values()] };
@@ -131,9 +153,33 @@ export function Buildings({ param }: { param?: string }) {
             <span className="small muted">Fill stats in a spreadsheet, then import.</span>
           </div>
           {msg && <p className="small">{msg}</p>}
+          <div className="row" style={{ marginTop: 8 }}>
+            <button className={`sm ${picking ? 'on' : ''}`} onClick={() => { setPicking(!picking); setPicked(new Set()); }}>{picking ? 'Cancel selection' : 'Select several…'}</button>
+            {picking && <button className="sm" onClick={() => setPicked(new Set(list.map((d) => d.id)))}>Select all shown ({list.length})</button>}
+          </div>
+          {picking && (
+            <div className="card">
+              <div className="small muted">{picked.size} selected — set for all of them:</div>
+              <div className="fields" style={{ marginTop: 6 }}>
+                <label className="field">Road<select value={bulk.road} onChange={(e) => setBulk({ ...bulk, road: e.target.value as RoadReq | '' })}><option value="">(keep)</option>{ROADS.map((r) => <option key={r} value={r}>{r}</option>)}</select></label>
+                <label className="field">Kind<select value={bulk.kind} onChange={(e) => setBulk({ ...bulk, kind: e.target.value as BuildingKind | '' })}><option value="">(keep)</option>{KINDS.map((k) => <option key={k} value={k}>{k}</option>)}</select></label>
+                <label className="field">Rotatable<select value={bulk.rotatable} onChange={(e) => setBulk({ ...bulk, rotatable: e.target.value as '' | 'yes' | 'no' })}><option value="">(keep)</option><option value="yes">yes</option><option value="no">no</option></select></label>
+                <label className="field">Protected<select value={bulk.protect} onChange={(e) => setBulk({ ...bulk, protect: e.target.value as '' | 'yes' | 'no' })}><option value="">(keep)</option><option value="yes">yes</option><option value="no">no</option></select></label>
+              </div>
+              <button className="primary" style={{ marginTop: 8 }} disabled={!picked.size || (!bulk.road && !bulk.kind && !bulk.rotatable && !bulk.protect)} onClick={applyBulk}>Apply to {picked.size}</button>
+            </div>
+          )}
           <div className="card list">
             {list.map((d) => (
-              <a key={d.id} className="item" href={`#/buildings/${encodeURIComponent(d.id)}`} style={{ color: 'inherit', textDecoration: 'none' }}>
+              <a key={d.id} className="item" href={`#/buildings/${encodeURIComponent(d.id)}`} style={{ color: 'inherit', textDecoration: 'none' }} onClick={(e) => {
+                if (!picking) return;
+                e.preventDefault();
+                const n = new Set(picked);
+                if (n.has(d.id)) n.delete(d.id);
+                else n.add(d.id);
+                setPicked(n);
+              }}>
+                {picking && <input type="checkbox" readOnly checked={picked.has(d.id)} aria-label={`Select ${d.name}`} />}
                 <div className="name">
                   <div>{displayName(d)}</div>
                   <div className="small muted">{d.kind} · {hasDims(d) ? `${d.width}×${d.height}` : '?×?'} · road: {d.road}</div>
@@ -164,6 +210,8 @@ function Editor({ def }: { def: BuildingDef }) {
   };
   const save = () => {
     const fixed = { ...d, dimsStatus: hasDims(d) && d.dimsStatus === 'unknown' ? ('user' as const) : d.dimsStatus };
+    // Any edit makes the record the player's own; bundled updates will no longer replace it.
+    if (JSON.stringify(fixed) !== JSON.stringify(def)) delete fixed.bundled;
     update((p) => ({ ...p, buildings: p.buildings.map((b) => (b.id === def.id ? fixed : b)) }));
     history.back();
   };

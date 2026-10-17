@@ -1,6 +1,7 @@
 import snapshotCsv from '../data/inventory-snapshot.csv?raw';
 import { REFERENCE_DATE, REFERENCE_IMAGE, REFERENCE_ROWS, REFERENCE_TOWN_HALL, REFERENCE_UNDERLAY } from '../data/cityReference';
 import { linkInventoryToDefs, seedBuildings } from './buildingDb';
+import { mergeBundled } from './bundled';
 import { makeCity } from './grid';
 import { parseInventoryCsv } from './inventory';
 import { DEFAULT_MODE_RULES, DEFAULT_MODE_WEIGHTS, DEFAULT_WEIGHTS } from './scoring';
@@ -50,7 +51,7 @@ export async function referenceUnderlay(): Promise<Underlay> {
 
 export function defaultProject(): Project {
   const parsed = parseInventoryCsv(snapshotCsv);
-  const buildings = withReferenceTownHall(seedBuildings(parsed.items));
+  const { buildings, sets } = mergeBundled(withReferenceTownHall(seedBuildings(parsed.items)), []);
   return {
     version: PROJECT_VERSION,
     settings: {
@@ -65,7 +66,7 @@ export function defaultProject(): Project {
     inventory: parsed.items,
     inventoryMeta: { importedAt: SNAPSHOT_DATE, source: 'Bundled snapshot of “Forge of Empires — Combined Storage Inventory”', summary: parsed.reported },
     buildings,
-    sets: [],
+    sets,
     recipes: [],
     // Buildable outline measured from the player's reconstruction screenshot (see cityReference.ts).
     city: referenceCity(),
@@ -85,7 +86,9 @@ export function migrate(p: Project): Project {
   out.settings.modeRules = { ...d.settings.modeRules, ...p.settings?.modeRules };
   const defs = new Map<string, BuildingDef>(out.buildings.map((b) => [b.id, b]));
   linkInventoryToDefs(out.inventory, defs);
-  out.buildings = withReferenceTownHall([...defs.values()]);
+  const merged = mergeBundled(withReferenceTownHall([...defs.values()]), out.sets);
+  out.buildings = merged.buildings;
+  out.sets = merged.sets;
   out.version = PROJECT_VERSION;
   return out;
 }

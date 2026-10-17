@@ -3,7 +3,7 @@ import { CityCanvas } from '../components/CityCanvas';
 import { CategoryTable, fmt } from '../components/common';
 import { renderLayoutPng, themeFromCss } from '../components/render';
 import type { Action } from '../lib/recommendations';
-import { planToText, rebuildPlan, recommend } from '../lib/recommendations';
+import { inventoryShortfalls, planToText, rebuildPlan, recommend } from '../lib/recommendations';
 import { evaluateCity } from '../lib/scoring';
 import { download } from '../lib/storage';
 import { useStore } from '../state/store';
@@ -31,6 +31,7 @@ export function Recommendations({ param }: { param?: string }) {
       </div>
     );
 
+  const shortfalls = inventoryShortfalls(base, layout.city, project.inventory, project.recipes);
   const evBase = evaluateCity(base, getDef, project.settings, ref, project.sets);
   const evNew = evaluateCity(layout.city, getDef, project.settings, ref, project.sets);
   const shown = recs.filter((r) => (filter === 'changes' ? r.action !== 'keep' : r.action === filter));
@@ -46,6 +47,12 @@ export function Recommendations({ param }: { param?: string }) {
         </select>
       </label>
       <p className="small muted">Compared with {baseline ? 'your saved baseline' : 'the current My City layout (no baseline saved)'}.</p>
+      {shortfalls.length > 0 && (
+        <div className="notice bad small">
+          This plan needs stored items you no longer have — re-run the optimizer:
+          <ul>{shortfalls.map((s) => <li key={s.key}>{s.name}: needs {s.needed}, have {s.available}</li>)}</ul>
+        </div>
+      )}
 
       <div className="grid2">
         <div className="stat"><div className="v">{fmt(evBase.score)} → {fmt(evNew.score)}</div><div className="l">Weighted score</div></div>

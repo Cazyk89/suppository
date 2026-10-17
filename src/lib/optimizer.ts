@@ -33,6 +33,11 @@ export interface OptimizeOptions {
   iterations: number;
   seed: number;
   candidates: number;
+  /**
+   * Most existing buildings a plan may move, store or upgrade (null = no limit). Only the
+   * lowest-value-per-tile buildings are made movable, so the limit holds by construction.
+   */
+  maxMoves: number | null;
 }
 
 export const DEFAULT_OPTIONS: OptimizeOptions = {
@@ -44,6 +49,7 @@ export const DEFAULT_OPTIONS: OptimizeOptions = {
   iterations: 400,
   seed: 1,
   candidates: 3,
+  maxMoves: null,
 };
 
 export interface OptimizeInput {
@@ -397,34 +403,54 @@ function connectWithRoad(g: Grid, p: Placement): boolean {
   return true;
 }
 
-/** Adds a comb of road lines (rows or columns `period` apart plus a trunk beside the Town Hall). */
-function addComb(g: Grid, orient: 'h' | 'v', period: number, lanes: 1 | 2) {
+/**
+ * Adds a comb of road lines: a trunk beside the Town Hall plus rows (or columns) every `period`
+ * tiles crossing it. The trunk goes on whichever side of the Town Hall has more free land.
+ * `trunkLanes`/`rowLanes` of 2 make two-lane road, so a two-lane trunk can feed one-lane rows.
+ */
+function addComb(g: Grid, orient: 'h' | 'v', period: number, trunkLanes: 1 | 2, rowLanes: 1 | 2) {
   const c = g.c;
   const th = townHall(c, g.getDef);
   const f = th && footprint(th, g.getDef(th.defId));
   if (!th || !f) return;
   const W = c.width;
-  const kind = lanes === 2 ? ROAD_2 : ROAD_1;
-  const set = (x: number, y: number) => {
+  const H = c.height;
+  const set = (x: number, y: number, lanes: 1 | 2) => {
     if (!inBounds(c, x, y)) return;
     const i = y * W + x;
+    const kind = lanes === 2 ? ROAD_2 : ROAD_1;
     if (g.free(i) || (kind === ROAD_2 && c.roads[i] === ROAD_1)) c.roads[i] = kind;
   };
+  // Free cells along a candidate trunk line (vertical line at x, or horizontal line at y).
+  const freeAlong = (pos: number, vertical: boolean) => {
+    let n = 0;
+    const len = vertical ? H : W;
+    for (let k = 0; k < len; k++) {
+      const x = vertical ? pos : k;
+      const y = vertical ? k : pos;
+      if (inBounds(c, x, y) && g.free(y * W + x)) n++;
+    }
+    return n;
+  };
   if (orient === 'h') {
-    const trunkX = th.x - lanes;
-    for (let y = 0; y < c.height; y++) for (let l = 0; l < lanes; l++) set(trunkX + l, y);
-    const anchor = th.y - lanes;
-    for (let y = 0; y < c.height; y++) {
+    const left = th.x - trunkLanes;
+    const right = th.x + f.w;
+    const trunkX = freeAlong(left, true) >= freeAlong(right, true) ? left : right;
+    for (let y = 0; y < H; y++) for (let l = 0; l < trunkLanes; l++) set(trunkX + l, y, trunkLanes);
+    const anchor = th.y - rowLanes;
+    for (let y = 0; y < H; y++) {
       if ((((y - anchor) % period) + period) % period !== 0) continue;
-      for (let x = 0; x < W; x++) for (let l = 0; l < lanes; l++) set(x, y + l);
+      for (let x = 0; x < W; x++) for (let l = 0; l < rowLanes; l++) set(x, y + l, rowLanes);
     }
   } else {
-    const trunkY = th.y - lanes;
-    for (let x = 0; x < W; x++) for (let l = 0; l < lanes; l++) set(x, trunkY + l);
-    const anchor = th.x - lanes;
+    const above = th.y - trunkLanes;
+    const below = th.y + f.h;
+    const trunkY = freeAlong(above, false) >= freeAlong(below, false) ? above : below;
+    for (let x = 0; x < W; x++) for (let l = 0; l < trunkLanes; l++) set(x, trunkY + l, trunkLanes);
+    const anchor = th.x - rowLanes;
     for (let x = 0; x < W; x++) {
       if ((((x - anchor) % period) + period) % period !== 0) continue;
-      for (let y = 0; y < c.height; y++) for (let l = 0; l < lanes; l++) set(x + l, y);
+      for (let y = 0; y < H; y++) for (let l = 0; l < rowLanes; l++) set(x + l, y, rowLanes);
     }
   }
   g.dirty = true;
@@ -455,15 +481,21 @@ function buildPool(input: OptimizeInput, getDef: DefLookup): Pool {
     return { defId, origin, sourceRef, uid, value: buildingValue(def, settings, ref), area: def.width! * def.height! };
   };
 
+  const movableUnits: { p: Placement; u: Unit }[] = [];
   for (const p of city.placements) {
     const def = getDef(p.defId);
     const movable =
       options.mode === 'rearrange' && !p.locked && !def?.protected && hasDims(def) && def.statsStatus !== 'unknown' && def.road !== 'unknown';
-    if (movable) {
-      const u = mkUnit(p.defId, p.origin === 'baseline' ? 'baseline' : p.origin, p.sourceRef, p.uid);
-      if (u) units.push(u);
-    } else fixed.push({ ...p });
+    const u = movable ? mkUnit(p.defId, p.origin === 'baseline' ? 'baseline' : p.origin, p.sourceRef, p.uid) : null;
+    if (u) movableUnits.push({ p, u });
+    else fixed.push({ ...p });
   }
+  // Move budget: free up only the weakest buildings (value per tile); the rest stay put.
+  if (options.maxMoves !== null && options.maxMoves !== undefined) {
+    movableUnits.sort((a, b) => a.u.value / a.u.area - b.u.value / b.u.area);
+    for (const m of movableUnits.splice(Math.max(0, options.maxMoves))) fixed.push({ ...m.p });
+  }
+  units.push(...movableUnits.map((m) => m.u));
 
   const kitsUsed = new Map<string, number>();
   const recipesUsed = new Map<string, number>();
@@ -558,21 +590,22 @@ export function optimize(input: OptimizeInput, progress: ProgressFn = () => {}):
   if (!hasTh) notes.push('No Town Hall is placed, so road connectivity could not be enforced. Place the Town Hall in My City.');
 
   const needsRoad2 = ordered.some((u) => getDef(u.defId)?.road === 'road2');
-  const strategies: { name: string; roads: 'existing' | 'comb'; orient?: 'h' | 'v'; period?: number; lanes?: 1 | 2 }[] = [
-    { name: 'Existing roads', roads: 'existing' },
-  ];
+  type Strategy = { name: string; roads: 'existing' | 'comb'; orient?: 'h' | 'v'; period?: number; trunkLanes?: 1 | 2; rowLanes?: 1 | 2 };
+  const strategies: Strategy[] = [{ name: 'Existing roads', roads: 'existing' }];
   if (options.generateRoads && hasTh)
     for (const period of [5, 7, 9])
-      for (const orient of ['h', 'v'] as const)
-        strategies.push({
-          name: `${orient === 'h' ? 'Horizontal' : 'Vertical'} road rows every ${period} tiles${needsRoad2 ? ' (two-lane)' : ''}`,
-          roads: 'comb',
-          orient,
-          period: needsRoad2 ? period + 1 : period,
-          lanes: needsRoad2 ? 2 : 1,
-        });
+      for (const orient of ['h', 'v'] as const) {
+        const dir = orient === 'h' ? 'Horizontal' : 'Vertical';
+        if (!needsRoad2) {
+          strategies.push({ name: `${dir} road rows every ${period} tiles`, roads: 'comb', orient, period, trunkLanes: 1, rowLanes: 1 });
+          continue;
+        }
+        // Two-lane buildings can sit on the trunk only (mixed), or anywhere (all two-lane).
+        strategies.push({ name: `${dir} rows every ${period} tiles, two-lane trunk`, roads: 'comb', orient, period, trunkLanes: 2, rowLanes: 1 });
+        strategies.push({ name: `${dir} two-lane rows every ${period + 1} tiles`, roads: 'comb', orient, period: period + 1, trunkLanes: 2, rowLanes: 2 });
+      }
 
-  const runStrategy = (s: (typeof strategies)[number]): StrategyResult => {
+  const runStrategy = (s: Strategy): StrategyResult => {
     const c = cloneCity(input.city);
     c.placements = pool.fixed.map((p) => ({ ...p }));
     const g = new Grid(c, getDef, options.allowUnknownTerrain);
@@ -580,7 +613,7 @@ export function optimize(input: OptimizeInput, progress: ProgressFn = () => {}):
       // Keep only roads that fixed buildings need, then lay the comb and reconnect.
       pruneRoads(c, getDef);
       g.dirty = true;
-      addComb(g, s.orient!, s.period!, s.lanes!);
+      addComb(g, s.orient!, s.period!, s.trunkLanes!, s.rowLanes!);
       for (const p of c.placements) connectWithRoad(g, p);
     }
     let left = greedyPlace(g, ordered, setIdOf);

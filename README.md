@@ -32,14 +32,15 @@ See **[ROADMAP.md](ROADMAP.md)** for what's next and the to-do list.
    - **Save as baseline** when the city matches the game. Scores then read *100 = baseline*.
 3. **Buildings** — enter width × height, road requirement and bonuses (from the in-game tooltip) for buildings in your city and the stored ones you'd consider placing. *Export CSV* → fill in a spreadsheet → *Import CSV* is the fast way. Sets, chains and kit recipes are defined here too.
    - **Kit recipes**: selection/upgrade kits are never assumed to produce anything. A recipe states “these kits (and optionally this placed/stored building) → this building”. Recipes start disabled.
-4. **Optimize** — adjust weights and per-mode military emphasis (GbG / GE / QI / PvP / city defense), choose *Rearrange* or *Fill only*, and generate. Compare candidates and save one.
+4. **Optimize** — pick a preset or adjust weights and per-mode military emphasis (GbG / GE / QI / PvP / city defense), choose *Rearrange* or *Fill only*, optionally cap how many existing buildings may change, and generate. Compare candidates and save one.
 5. **Plan** — ranked changes and the rebuilding sequence (non-disruptive placements first, stores, then a single reconstruction-mode pass).
 6. **Layouts** — saved layouts, before/after comparison, PNG export, and **JSON backup/restore** (includes screenshots).
 
 ## How the optimizer works
 
 * Locked buildings, protected buildings (Town Hall, Great Buildings) and any placed building whose statistics are unknown stay exactly where they are. Stored buildings with unknown size, road requirement or statistics are skipped and listed.
-* Road strategies: keep existing roads, plus generated “comb” networks (rows or columns every 5/7/9 tiles with a trunk beside the Town Hall; two-lane when any candidate needs it).
+* Road strategies: keep existing roads, plus generated “comb” networks (rows or columns every 5/7/9 tiles with a trunk beside the Town Hall). When any candidate needs two-lane road, both a two-lane trunk with one-lane rows and an all-two-lane network are tried.
+* Move budget: when set, only the N weakest existing buildings (value per tile) may move, be stored or be upgraded.
 * For each strategy: greedy placement by value per tile into the tightest-fitting valid spot (road access required where applicable, set members pulled together), prune every road tile no building needs, refill the freed tiles.
 * Seeded local search on the best strategies: remove 1–3 low-density buildings and re-pack; keep only changes that don't lower the score.
 * Upper bound: fractional knapsack of all candidate buildings over all free tiles, ignoring road space (and set/chain bonuses when present). The gap to it is shown with every run.
@@ -71,4 +72,4 @@ CHROMIUM_PATH=/path/to/chromium npm run smoke
 
 **Live app:** https://cazyk89.github.io/suppository/ — deployed by the *Deploy to GitHub Pages* workflow on every push to the default branch. On iPhone, open it in Safari and choose **Share → Add to Home Screen**.
 
-Code map: `src/lib` holds the pure logic (`inventory`, `grid`, `scoring`, `optimizer`, `recommendations`, `project`), `src/components` the canvas renderer/editor, `src/pages` one file per app section, `src/data/inventory-snapshot.csv` the bundled sheet export.
+Code map: `src/lib` holds the pure logic (`inventory`, `grid`, `scoring`, `optimizer`, `recommendations`, `project`), `src/components` the canvas renderer/editor, `src/pages` one file per app section, `src/data/inventory-snapshot.csv` the bundled sheet export, `src/data/buildings.json` building data shipped with the app (merged into each device's database without overwriting hand-entered values), `src/data/cityReference.ts` the measured city grid.

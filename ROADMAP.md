@@ -21,7 +21,10 @@ lives in the browser's storage and in backup files you keep yourself.
 ## Phase 2 — Building data (next)
 
 The optimizer only places buildings whose size, road requirement and bonuses are known. Nothing is
-guessed.
+guessed. Values from screenshots go into `src/data/buildings.json`, which ships with the app and fills
+in each device's database without overwriting anything entered by hand.
+
+- [x] Bundled building data file with safe merge (ready for the screenshots)
 
 - [ ] Player sends screenshots of building info panels (in-city buildings first, then stored ones)
 - [ ] Enter size, road requirement and bonuses for every building currently in the city
@@ -52,22 +55,22 @@ guessed.
 
 ## Phase 5 — Optimizer improvements
 
-- [ ] Mixed road networks: two-lane trunk with one-lane branches (today a generated network is all
-      one type)
+- [x] Mixed road networks: two-lane trunk with one-lane branches
+- [x] Generated trunk road goes on whichever side of the Town Hall has room (it sits on the map edge)
 - [ ] Model two-lane roads as 2 × 2 pieces, as the game does
 - [ ] Set- and chain-aware placement (place groups together instead of only scoring them)
 - [ ] Exact or near-exact solver option (CP-SAT / integer programming) for smaller areas, with a
       proven optimality gap
-- [ ] Respect a "move budget" (limit how many buildings a plan may move)
-- [ ] Per-game-mode presets (GbG-focused, GE-focused, Forge Point-focused)
+- [x] Move budget: limit how many existing buildings a plan may move, store or upgrade
+- [x] Priority presets: Balanced (default), GbG, Expedition, Quantum Incursions, Forge Point economy
 - [ ] Faster search on phones (profiling on a real iPhone)
 
 ## Phase 6 — Quality of life
 
 - [ ] Test the installed app on an iPhone (touch gestures, safe areas, offline use, storage)
 - [ ] Faster stat entry: a paste-friendly form, or reading values from info-panel screenshots
-- [ ] Bulk edit in the Building Database (set road requirement / kind for many at once)
-- [ ] Mark inventory items used by a saved plan, and warn when inventory changes invalidate it
+- [x] Bulk edit in the Building Database (road requirement, kind, rotatable, protected)
+- [x] Warn when a saved plan needs stored items the inventory no longer has
 - [ ] Optional signed-in Google Sheets refresh (today the sheet must be link-shared, or uploaded as CSV)
 - [ ] Optional cloud backup (today: manual JSON export/import)
 - [ ] Undo in the Building Database and Inventory pages

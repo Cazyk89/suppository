@@ -6,11 +6,12 @@ import { renderLayoutPng, themeFromCss } from '../components/render';
 import { cloneCity } from '../lib/grid';
 import { defaultProject, exportBackup, importBackup } from '../lib/project';
 import { evaluateCity } from '../lib/scoring';
+import { inventoryShortfalls } from '../lib/recommendations';
 import { download } from '../lib/storage';
 import { useStore } from '../state/store';
 
 export function Layouts(_: { param?: string }) {
-  const { project, update, replace, getDef, ref, persistent } = useStore();
+  const { project, update, replace, getDef, ref, persistent, baseline } = useStore();
   const [a, setA] = useState(project.baselineId ?? project.layouts[0]?.id ?? '');
   const [b, setB] = useState(project.layouts.at(-1)?.id ?? '');
   const [msg, setMsg] = useState('');
@@ -32,10 +33,11 @@ export function Layouts(_: { param?: string }) {
       <div className="card list">
         {project.layouts.map((l) => {
           const ev = evaluateCity(l.city, getDef, project.settings, ref, project.sets);
+          const short = l.id !== project.baselineId ? inventoryShortfalls(baseline ?? project.city, l.city, project.inventory, project.recipes).length : 0;
           return (
             <div key={l.id} className="item" style={{ flexWrap: 'wrap' }}>
               <div className="name">
-                <div>{l.name} {l.id === project.baselineId && <span className="badge good">baseline</span>} <span className="badge">{l.kind}</span></div>
+                <div>{l.name} {l.id === project.baselineId && <span className="badge good">baseline</span>} <span className="badge">{l.kind}</span>{short > 0 && <span className="badge bad">needs items you no longer have</span>}</div>
                 <div className="small muted">{new Date(l.createdAt).toLocaleString()} · score {fmt(ev.score)} · {l.city.placements.length} buildings</div>
               </div>
               <div className="row">

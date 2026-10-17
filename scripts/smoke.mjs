@@ -80,7 +80,22 @@ await expectText('Imported 3 building rows');
 step('test stats imported');
 await shot('04-buildings');
 
+// Bulk edit: select one stored building and set its road requirement.
+await page.getByRole('button', { name: /^In inventory/ }).click();
+await page.getByRole('button', { name: 'Select several…' }).click();
+await page.locator('.card.list .item').first().click();
+await page.getByLabel('Rotatable').selectOption('no');
+await page.getByRole('button', { name: 'Apply to 1' }).click();
+await expectText('Updated 1 building');
+step('bulk edit applied');
+
 await page.goto(base + '#/optimizer');
+await page.getByRole('button', { name: 'GbG fighter' }).click();
+await expectText('Military strength: 55');
+await page.getByRole('button', { name: 'Balanced (default)' }).click();
+await expectText('Military strength: 35');
+await page.getByLabel('Max buildings moved/stored').fill('5');
+step('presets and move budget');
 await page.getByRole('button', { name: 'Generate layouts' }).click();
 await expectText('Heuristic search');
 step('optimizer finished');

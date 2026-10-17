@@ -66,4 +66,28 @@ describe('optimizer', () => {
     expect(made).toBeLessThanOrEqual(2);
     expect(top.kitsUsed.find((k) => k.key === 'kit')?.qty ?? 0).toBe(made);
   });
+
+  it('respects the move budget', () => {
+    const defs = fixtureDefs();
+    const get = (id: string) => defs.find((d) => d.id === id);
+    const city = fixtureCity();
+    for (let x = 0; x <= 5; x++) city.roads[7 * city.width + x] = ROAD_1;
+    // Four weak decorations scattered where they block good spots.
+    [[0, 0], [3, 3], [12, 2], [2, 12]].forEach(([x, y], i) => city.placements.push({ uid: `d${i}`, defId: 'deco', x, y, rot: 0, locked: false, origin: 'baseline' }));
+    const ref = referenceFrom(evaluateCity(city, get, settings, null).values, { military: 10, fp: 10, goods: 1, other: 1 });
+    for (const maxMoves of [0, 1, 2]) {
+      const res = optimize({
+        city, defs, sets: [], settings, inventory: [inv('fp-item', 'fp', 8), inv('mil-item', 'mil', 8)], recipes: [], ref,
+        options: { ...DEFAULT_OPTIONS, iterations: 40, maxMoves },
+      });
+      for (const c of res.candidates) {
+        const changed = city.placements.filter((b) => {
+          const q = c.city.placements.find((x) => x.uid === b.uid);
+          return !q || q.x !== b.x || q.y !== b.y || q.defId !== b.defId;
+        });
+        expect(changed.length).toBeLessThanOrEqual(maxMoves);
+        expect(validateCity(c.city, get, true).issues).toEqual([]);
+      }
+    }
+  });
 });

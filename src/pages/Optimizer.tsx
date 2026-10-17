@@ -6,7 +6,7 @@ import { displayName, hasDims } from '../lib/buildingDb';
 import { cloneCity, countCells, townHall } from '../lib/grid';
 import type { OptimizeInput, OptimizeOptions, OptimizeResult } from '../lib/optimizer';
 import { DEFAULT_OPTIONS } from '../lib/optimizer';
-import { DEFAULT_MODE_WEIGHTS, DEFAULT_WEIGHTS, evaluateCity } from '../lib/scoring';
+import { DEFAULT_MODE_WEIGHTS, DEFAULT_WEIGHTS, PRESETS, evaluateCity } from '../lib/scoring';
 import type { ModeWeights, Weights } from '../lib/types';
 import { useStore } from '../state/store';
 
@@ -103,6 +103,16 @@ export function Optimizer(_: { param?: string }) {
           <h2 style={{ margin: 0 }}>Priorities</h2>
           <button className="sm" onClick={() => update((p) => ({ ...p, settings: { ...p.settings, weights: { ...DEFAULT_WEIGHTS }, modeWeights: { ...DEFAULT_MODE_WEIGHTS } } }))}>Reset to 35/30/20/15</button>
         </div>
+        <div className="row" style={{ margin: '8px 0' }}>
+          {PRESETS.map((pr) => {
+            const on = JSON.stringify(pr.weights) === JSON.stringify(settings.weights) && JSON.stringify(pr.modeWeights) === JSON.stringify(settings.modeWeights);
+            return (
+              <button key={pr.id} className={`sm ${on ? 'on' : ''}`} onClick={() => update((p) => ({ ...p, settings: { ...p.settings, weights: { ...pr.weights }, modeWeights: { ...pr.modeWeights } } }))}>
+                {pr.name}
+              </button>
+            );
+          })}
+        </div>
         {(Object.keys(W_LABELS) as (keyof Weights)[]).map((k) => (
           <label className="field" key={k}>
             {W_LABELS[k]}: {settings.weights[k]} ({fmt((100 * settings.weights[k]) / (wTotal || 1), 0)}%)
@@ -143,6 +153,7 @@ export function Optimizer(_: { param?: string }) {
             <label className="field">Search effort<input type="number" min={0} max={5000} value={opts.iterations} onChange={(e) => setOpts({ ...opts, iterations: Number(e.target.value) })} /></label>
             <label className="field">Random seed<input type="number" value={opts.seed} onChange={(e) => setOpts({ ...opts, seed: Number(e.target.value) })} /></label>
             <label className="field">Candidates<input type="number" min={1} max={6} value={opts.candidates} onChange={(e) => setOpts({ ...opts, candidates: Number(e.target.value) })} /></label>
+            <label className="field">Max buildings moved/stored<input type="number" min={0} placeholder="no limit" value={opts.maxMoves ?? ''} disabled={opts.mode === 'fill'} onChange={(e) => setOpts({ ...opts, maxMoves: e.target.value === '' ? null : Math.max(0, Number(e.target.value)) })} /></label>
           </div>
         </div>
         <div className="row" style={{ marginTop: 10 }}>

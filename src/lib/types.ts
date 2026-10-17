@@ -90,6 +90,8 @@ export interface BuildingDef {
   chainBonus?: Partial<Stats>;
   /** Never move/store this building (Great Buildings and Town Hall default to protected). */
   protected?: boolean;
+  /** Set while the record is an untouched copy of the app's bundled data (its revision). */
+  bundled?: string;
 }
 
 export interface SetDef {

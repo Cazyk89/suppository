@@ -1,0 +1,5 @@
+{
+  "about": "Building data shipped with the app. Only values read from the game (info panels / tooltips) belong here; never guesses. Each record's id must match the app's building id (Building Database → the id shown in the URL, e.g. 'harvest-barn-lv4'). Values merge into a player's on-device database without overwriting anything they entered themselves.",
+  "buildings": [],
+  "sets": []
+}

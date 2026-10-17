@@ -14,6 +14,18 @@ export const DEFAULT_MODE_WEIGHTS: ModeWeights = { gbg: 35, ge: 25, qi: 20, pvp:
 
 export const DEFAULT_MODE_RULES: ModeRules = { qiUsesCityBoosts: false };
 
+/**
+ * One-tap priority presets. These are starting points for the player's own preferences, not game
+ * data; "Balanced" is the agreed default.
+ */
+export const PRESETS: { id: string; name: string; weights: Weights; modeWeights: ModeWeights }[] = [
+  { id: 'balanced', name: 'Balanced (default)', weights: { ...DEFAULT_WEIGHTS }, modeWeights: { ...DEFAULT_MODE_WEIGHTS } },
+  { id: 'gbg', name: 'GbG fighter', weights: { military: 55, fp: 25, goods: 10, other: 10 }, modeWeights: { gbg: 70, ge: 15, qi: 5, pvp: 5, cityDefense: 5 } },
+  { id: 'ge', name: 'Expedition', weights: { military: 55, fp: 25, goods: 10, other: 10 }, modeWeights: { gbg: 15, ge: 70, qi: 5, pvp: 5, cityDefense: 5 } },
+  { id: 'qi', name: 'Quantum Incursions', weights: { military: 55, fp: 25, goods: 10, other: 10 }, modeWeights: { gbg: 10, ge: 10, qi: 70, pvp: 5, cityDefense: 5 } },
+  { id: 'fp', name: 'Forge Point economy', weights: { military: 15, fp: 60, goods: 15, other: 10 }, modeWeights: { ...DEFAULT_MODE_WEIGHTS } },
+];
+
 export function addStats(a: Stats, b: Partial<Stats>, mult = 1): Stats {
   for (const k of STAT_KEYS) a[k] += (b[k] ?? 0) * mult;
   return a;
