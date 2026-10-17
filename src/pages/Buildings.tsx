@@ -52,13 +52,15 @@ export function Buildings({ param }: { param?: string }) {
       setMsg('CSV needs a header row with at least a "name" column.');
       return;
     }
-    let n = 0;
+    // Count outside the state updater: React may run the updater after this function returns.
+    const records = rows.slice(1).map((r) => {
+      const rec: Record<string, string> = {};
+      head.forEach((h, i) => (rec[h] = (r[i] ?? '').trim()));
+      return rec;
+    }).filter((rec) => rec.name);
     update((p) => {
       const defs = new Map(p.buildings.map((b) => [b.id, b]));
-      for (const r of rows.slice(1)) {
-        const rec: Record<string, string> = {};
-        head.forEach((h, i) => (rec[h] = (r[i] ?? '').trim()));
-        if (!rec.name) continue;
+      for (const rec of records) {
         const id = rec.id || slug(rec.name);
         const d: BuildingDef = { ...(defs.get(id) ?? newDef({ id, name: rec.name })) };
         d.name = rec.name;
@@ -84,11 +86,10 @@ export function Buildings({ param }: { param?: string }) {
         if (anyStat && d.statsStatus === 'unknown') d.statsStatus = 'user';
         if (hasDims(d) && d.dimsStatus === 'unknown') d.dimsStatus = 'user';
         defs.set(id, d);
-        n++;
       }
       return { ...p, buildings: [...defs.values()] };
     });
-    setMsg(`Imported ${n} building rows.`);
+    setMsg(`Imported ${records.length} building rows.`);
   };
 
   if (editing) return <Editor def={editing} />;

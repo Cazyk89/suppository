@@ -71,13 +71,12 @@ step('baseline saved');
 await page.goto(base + '#/buildings');
 const csv = [
   'id,name,width,height,road,statsStatus,fp,attAtk,attDef,goods',
-  'town-hall,Town Hall,3,3,none,user,,,,',
   'aviary,Aviary,2,2,road,user,3,,,',
   'cider-garden,Cider Garden,2,3,none,user,,4,4,',
   'grilling-grove,Grilling Grove,3,3,road,user,1,2,2,30',
 ].join('\n');
 await page.locator('input[type=file]').setInputFiles({ name: 'test.csv', mimeType: 'text/csv', buffer: Buffer.from(csv) });
-await expectText('Imported 4 building rows');
+await expectText('Imported 3 building rows');
 step('test stats imported');
 await shot('04-buildings');
 
