@@ -30,6 +30,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [saved, setSaved] = useState<Ctx['saved']>('saved');
   const [persistent, setPersistent] = useState(false);
   const timer = useRef<number | undefined>(undefined);
+  // The newest project not yet written to storage (null when everything is saved).
+  const pending = useRef<Project | null>(null);
 
   useEffect(() => {
     kvGet<Project>(KEY)
@@ -38,16 +40,39 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     requestPersistence().then(setPersistent);
   }, []);
 
-  const persist = useCallback((p: Project) => {
-    setSaved('saving');
+  const flush = useCallback(() => {
     window.clearTimeout(timer.current);
-    timer.current = window.setTimeout(() => {
-      kvSet(KEY, p).then(
-        () => setSaved('saved'),
-        () => setSaved('error'),
-      );
-    }, 400);
+    const p = pending.current;
+    if (!p) return;
+    pending.current = null;
+    kvSet(KEY, p).then(
+      () => setSaved(pending.current ? 'saving' : 'saved'),
+      () => setSaved('error'),
+    );
   }, []);
+
+  const persist = useCallback(
+    (p: Project) => {
+      setSaved('saving');
+      pending.current = p;
+      window.clearTimeout(timer.current);
+      timer.current = window.setTimeout(flush, 250);
+    },
+    [flush],
+  );
+
+  // Write immediately when the app is hidden or closed (iOS may suspend it right after).
+  useEffect(() => {
+    const onHide = () => {
+      if (document.visibilityState === 'hidden') flush();
+    };
+    document.addEventListener('visibilitychange', onHide);
+    window.addEventListener('pagehide', flush);
+    return () => {
+      document.removeEventListener('visibilitychange', onHide);
+      window.removeEventListener('pagehide', flush);
+    };
+  }, [flush]);
 
   const update = useCallback(
     (fn: (p: Project) => Project) =>

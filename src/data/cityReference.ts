@@ -1,5 +1,5 @@
 // City outline measured from the player's reconstruction-mode screenshot (all buildings stripped),
-// 2026-10-17: public/reference/city-grid-2026-10-17.jpg.
+// 2026-10-17. The screenshot itself is not kept in the repository; only these measurements are.
 //
 // Method: the screenshot's tile grid was located (2:1 isometric lattice, 20.85 px per tile row);
 // a tile counts as buildable where the game's grid lines are drawn, and the result was snapped to
@@ -9,7 +9,8 @@
 // '#' = buildable, '.' = outside the city. Row 0 is the top-right edge in the game view.
 
 export const REFERENCE_DATE = '2026-10-17';
-export const REFERENCE_IMAGE = 'reference/city-grid-2026-10-17.jpg';
+/** Pixel size of that screenshot; an imported image of this size is aligned automatically. */
+export const REFERENCE_IMAGE_SIZE = { width: 2576, height: 1184 };
 
 export const REFERENCE_ROWS: string[] = [
   '........############################',

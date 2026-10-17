@@ -110,7 +110,11 @@ export function Inventory(_: { param?: string }) {
         <div className="stack">
           <label className="field">
             Google Sheet link or ID (saved on this device only)
-            <input value={sheetInput} placeholder="https://docs.google.com/spreadsheets/d/…" onChange={(e) => setSheetInput(e.target.value)} />
+            <input value={sheetInput} placeholder="https://docs.google.com/spreadsheets/d/…" onChange={(e) => {
+              setSheetInput(e.target.value);
+              const id = extractSheetId(e.target.value);
+              update((p) => ({ ...p, settings: { ...p.settings, sheetId: id } }));
+            }} />
           </label>
           <div className="row">
             <button className="primary" onClick={refreshFromSheet}>Refresh from Google Sheets</button>

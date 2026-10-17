@@ -1,12 +1,12 @@
 import snapshotCsv from '../data/inventory-snapshot.csv?raw';
-import { REFERENCE_DATE, REFERENCE_IMAGE, REFERENCE_ROWS, REFERENCE_TOWN_HALL, REFERENCE_UNDERLAY } from '../data/cityReference';
+import { REFERENCE_DATE, REFERENCE_ROWS, REFERENCE_TOWN_HALL } from '../data/cityReference';
 import { linkInventoryToDefs, seedBuildings } from './buildingDb';
 import { mergeBundled } from './bundled';
 import { makeCity } from './grid';
 import { parseInventoryCsv } from './inventory';
 import { DEFAULT_MODE_RULES, DEFAULT_MODE_WEIGHTS, DEFAULT_WEIGHTS } from './scoring';
 import { blobGet, blobKeys, blobSet, blobToDataUrl, dataUrlToBlob } from './storage';
-import type { BuildingDef, CityState, Project, Underlay } from './types';
+import type { BuildingDef, CityState, Project } from './types';
 import { TERRAIN_BLOCKED, TERRAIN_BUILDABLE } from './types';
 
 export const PROJECT_VERSION = 1;
@@ -38,15 +38,6 @@ export function withReferenceTownHall(buildings: BuildingDef[]): BuildingDef[] {
       ? { ...b, width: REFERENCE_TOWN_HALL.width, height: REFERENCE_TOWN_HALL.height, dimsStatus: 'verified', source: TOWN_HALL_SOURCE }
       : b,
   );
-}
-
-/** Stores the bundled reference screenshot and returns an underlay aligned to the reference grid. */
-export async function referenceUnderlay(): Promise<Underlay> {
-  const res = await fetch(REFERENCE_IMAGE);
-  if (!res.ok) throw new Error(`Could not load the reference screenshot (HTTP ${res.status}).`);
-  const blobKey = `reference-${REFERENCE_DATE}`;
-  await blobSet(blobKey, await res.blob());
-  return { id: blobKey, name: `Reconstruction screenshot ${REFERENCE_DATE}`, blobKey, visible: true, opacity: 0.6, ...REFERENCE_UNDERLAY };
 }
 
 export function defaultProject(): Project {

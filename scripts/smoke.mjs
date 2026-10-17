@@ -34,11 +34,24 @@ await shot('02-inventory');
 // Load the city measured from the reconstruction screenshot (with aligned underlay).
 await page.goto(base + '#/city');
 await page.getByRole('button', { name: /^Grid / }).click();
-await page.getByRole('button', { name: 'Load measured city + aligned screenshot' }).click();
+await page.getByRole('button', { name: 'Load measured city', exact: true }).click();
 await expectText('Loaded 2320 buildable tiles');
-await page.waitForTimeout(500);
+step('measured city loaded');
+
+// A screenshot with the measured screenshot's pixel size is aligned to the grid automatically.
+await page.getByRole('button', { name: /^Screenshots/ }).click();
+const png = await page.evaluate(async () => {
+  const c = document.createElement('canvas');
+  c.width = 2576;
+  c.height = 1184;
+  c.getContext('2d').fillRect(0, 0, 10, 10);
+  const b = await new Promise((r) => c.toBlob(r, 'image/png'));
+  return Array.from(new Uint8Array(await b.arrayBuffer()));
+});
+await page.locator('input[type=file][accept="image/*"]').setInputFiles({ name: 'reconstruction.png', mimeType: 'image/png', buffer: Buffer.from(png) });
+await expectText('Scale: 1.151');
 await shot('03a-city-reference-iso');
-step('measured city + aligned screenshot loaded');
+step('same-size screenshot auto-aligned');
 
 // Top-down view: draw a road down the column beside the Town Hall (x=6, y=4..60).
 await page.getByRole('button', { name: 'Top-down' }).click();
@@ -112,10 +125,39 @@ await page.goto(base + '#/layouts');
 await expectText('baseline');
 await shot('07-layouts');
 
-// Persistence: reload and check the baseline survived.
-await page.reload();
-await expectText('baseline');
-step('project persisted across reload');
+// Persistence: change settings and the city, close the page immediately, reopen, check everything.
+await page.goto(base + '#/dashboard');
+await page.getByLabel('Era').fill('Smoke Test Era');
+await page.goto(base + '#/inventory');
+await page.getByText('Refresh inventory').click();
+await page.getByLabel(/Google Sheet link/).fill('https://docs.google.com/spreadsheets/d/smoke-test-sheet/edit');
+await page.goto(base + '#/optimizer');
+await page.getByRole('button', { name: 'Forge Point economy' }).click();
+await page.goto(base + '#/city');
+await page.getByRole('button', { name: '⌫ Road' }).click();
+await page.waitForTimeout(200);
+const roadCount = async (pg) => Number((await pg.locator('main').innerText()).match(/(\d+) road · /)?.[1]);
+const before = await roadCount(page);
+p = cell(6, 40);
+await page.mouse.click(p.x, p.y); // erase one road tile, then close at once
+await page.close({ runBeforeUnload: true });
+
+const page2 = await ctx.newPage();
+await page2.goto(base + '#/dashboard');
+await page2.getByLabel('Era').waitFor();
+if ((await page2.getByLabel('Era').inputValue()) !== 'Smoke Test Era') throw new Error('era not saved');
+await page2.goto(base + '#/inventory');
+await page2.getByText('Refresh inventory').click();
+if ((await page2.getByLabel(/Google Sheet link/).inputValue()) !== 'smoke-test-sheet') throw new Error('sheet link not saved');
+await page2.goto(base + '#/optimizer');
+await page2.getByText('Forge Points: 60').first().waitFor({ timeout: 5000 });
+await page2.goto(base + '#/city');
+await page2.getByText(/ road · /).first().waitFor();
+const roads = await roadCount(page2);
+if (roads !== before - 1) throw new Error(`city edit not saved: expected ${before - 1} road tiles, got ${roads}`);
+await page2.goto(base + '#/layouts');
+await page2.getByText('baseline').first().waitFor();
+step('era, sheet link, weights, city edit and layouts all survived an instant close');
 
 } catch (e) {
   console.error('FAILED:', e.message.split('\n')[0]);

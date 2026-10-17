@@ -8,8 +8,8 @@ import { displayName, hasDims, newDef } from '../lib/buildingDb';
 import { cloneCity, connectivity, coordLabel, countCells, footprint, inBounds, isConnected, resizeCity, validateCity } from '../lib/grid';
 import { effectiveQty, slug } from '../lib/inventory';
 import { blobDelete, blobSet } from '../lib/storage';
-import { referenceCity, referenceUnderlay, withReferenceTownHall } from '../lib/project';
-import { REFERENCE_DATE, REFERENCE_ROWS, REFERENCE_TOWN_HALL } from '../data/cityReference';
+import { referenceCity, withReferenceTownHall } from '../lib/project';
+import { REFERENCE_DATE, REFERENCE_IMAGE_SIZE, REFERENCE_ROWS, REFERENCE_TOWN_HALL, REFERENCE_UNDERLAY } from '../data/cityReference';
 import type { CityState, Placement, Underlay } from '../lib/types';
 import { ROAD_1, ROAD_2, ROAD_NONE, TERRAIN_BLOCKED, TERRAIN_BUILDABLE, TERRAIN_UNKNOWN } from '../lib/types';
 import { useStore } from '../state/store';
@@ -202,8 +202,13 @@ export function MyCity(_: { param?: string }) {
       img.src = url;
       await img.decode().catch(() => {});
       URL.revokeObjectURL(url);
+      // The measured reconstruction screenshot has a known position on the measured grid.
+      const isReference =
+        img.naturalWidth === REFERENCE_IMAGE_SIZE.width && img.naturalHeight === REFERENCE_IMAGE_SIZE.height &&
+        city.width === REFERENCE_ROWS[0].length && city.height === REFERENCE_ROWS.length;
       const scale = img.naturalWidth ? (b.maxX - b.minX) / img.naturalWidth : 1;
-      added.push({ id: key, name: f.name, blobKey: key, visible: added.length === 0, opacity: 0.6, x: b.minX, y: b.minY, scale, rotation: 0 });
+      const placement = isReference ? REFERENCE_UNDERLAY : { x: b.minX, y: b.minY, scale, rotation: 0 };
+      added.push({ id: key, name: f.name, blobKey: key, visible: added.length === 0, opacity: 0.6, ...placement });
     }
     update((p) => ({ ...p, underlays: [...p.underlays.map((u) => ({ ...u, visible: added.length ? false : u.visible })), ...added], viewMode: 'iso' }));
     setPanel('screens');
@@ -488,22 +493,11 @@ export function MyCity(_: { param?: string }) {
 function GridPanel({ city, setCity }: { city: CityState; setCity: (fn: (c: CityState) => CityState) => void }) {
   const { update } = useStore();
   const [status, setStatus] = useState('');
-  const loadReference = async () => {
-    if (city.placements.length > 1 && !confirm('Replace the grid and buildings with the city measured from the reconstruction screenshot? (Undo is available.)')) return;
-    setStatus('Loading…');
-    try {
-      const u = await referenceUnderlay();
-      setCity(() => referenceCity());
-      update((p) => ({
-        ...p,
-        buildings: withReferenceTownHall(p.buildings),
-        underlays: [...p.underlays.filter((x) => x.id !== u.id).map((x) => ({ ...x, visible: false })), u],
-        viewMode: 'iso',
-      }));
-      setStatus(`Loaded ${REFERENCE_ROWS.join('').split('#').length - 1} buildable tiles and the aligned screenshot.`);
-    } catch (e) {
-      setStatus((e as Error).message);
-    }
+  const loadReference = () => {
+    if (city.placements.length > 1 && !confirm('Replace the grid and buildings with the measured city? (Undo is available.)')) return;
+    setCity(() => referenceCity());
+    update((p) => ({ ...p, buildings: withReferenceTownHall(p.buildings) }));
+    setStatus(`Loaded ${REFERENCE_ROWS.join('').split('#').length - 1} buildable tiles.`);
   };
   const [w, setW] = useState(city.width);
   const [h, setH] = useState(city.height);
@@ -528,7 +522,8 @@ function GridPanel({ city, setCity }: { city: CityState; setCity: (fn: (c: CityS
       <p className="small muted">
         Buildable outline measured from your stripped reconstruction-mode screenshot: {REFERENCE_ROWS.join('').split('#').length - 1} tiles in a {REFERENCE_ROWS[0].length} × {REFERENCE_ROWS.length} area, snapped to 4×4 expansions. Town Hall: {REFERENCE_TOWN_HALL.width} × {REFERENCE_TOWN_HALL.height} (confirmed).
       </p>
-      <button onClick={loadReference}>Load measured city + aligned screenshot</button>
+      <button onClick={loadReference}>Load measured city</button>
+      <p className="small muted">Importing that same screenshot under Screenshots lines it up with the grid automatically.</p>
       {status && <p className="small">{status}</p>}
     </div>
   );

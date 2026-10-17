@@ -96,4 +96,5 @@ in each device's database without overwriting anything entered by hand.
 - [x] Optimizer with road generation, pruning, local search and an upper bound
 - [x] Ranked recommendations and step-by-step rebuilding plan; image and text export
 - [x] Saved layouts, comparison, JSON backup/restore
+- [x] Everything saves on the device as you go, including the instant the app is closed (tested)
 - [x] Automated tests, iPhone-size end-to-end test, CI
